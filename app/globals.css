@@ -1,3 +1,8 @@
+/* app/globals.css */
+/* app/globals.css */
+@theme {
+  /* Konfigurasi tema custom kamu jika ada bisa ditaruh di sini */
+}
 @import "tailwindcss";
 
 :root {
