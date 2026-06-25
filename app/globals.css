@@ -1,7 +1,8 @@
 /* app/globals.css */
 /* app/globals.css */
+/* css(unknownAtRules): ignore */
 @theme {
-  /* Konfigurasi tema custom kamu jika ada bisa ditaruh di sini */
+  /* ... konfigurasi tema Tailwind v4 kamu ... */
 }
 @import "tailwindcss";
 
