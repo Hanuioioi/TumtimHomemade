@@ -9,8 +9,8 @@ interface Produk {
   kategori: string;
   stok: number;
   deskripsi: string;
+  gambar_url?: string; 
 }
-
 interface CartItem {
   produk: Produk;
   quantity: number;
@@ -205,7 +205,7 @@ export default function TumTimApp() {
   const addToCart = (produk: Produk) => {
     const existing = cart.find((item) => item.produk.id === produk.id);
     if (existing) {
-      setCart(cart.map((item) => item.produk.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
+      setCart(cart.map((item) => item.produk.id === produk.id ? { ...item, quantity: item.quantity + 1 } : item));
     } else {
       setCart([...cart, { produk, quantity: 1 }]);
     }
