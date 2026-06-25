@@ -1,4 +1,3 @@
-// app/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -17,6 +16,16 @@ interface CartItem {
   quantity: number;
 }
 
+// Interface baru untuk data Profil Toko
+interface ProfilToko {
+  nama_toko: string;
+  slogan: string;
+  alamat: string;
+  telepon: string;
+  jam_buka: string;
+  sosmed: string;
+}
+
 export default function TumTimApp() {
   // State Navigasi Utama
   const [view, setView] = useState<'login' | 'dashboard' | 'katalog' | 'transaksi'>('login');
@@ -27,26 +36,89 @@ export default function TumTimApp() {
   const [namaPelanggan, setNamaPelanggan] = useState('');
   const [currentDate, setCurrentDate] = useState('');
 
+  // ==========================================
+  // STATE & LOGIKA CRUD PROFIL TOKO
+  // ==========================================
+  const [profil, setProfil] = useState<ProfilToko>({
+    nama_toko: "Tum Tim Cookies & Bakery",
+    slogan: "Artisanal Bakery & Confectionery Specialist",
+    alamat: "Park Royal Regency, Jl. Kesatrian No.10 Blok L1, Sono, Sidokerto, Kec. Buduran, Kabupaten Sidoarjo, Jawa Timur 61252",
+    telepon: "0811-3000-652 / 0811-3006-399",
+    jam_buka: "07:00 AM - 09:00 PM (Daily)",
+    sosmed: "@tumtim.cookies | bludershono"
+  });
+
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  
+  // State Input Form Profil
+  const [formNamaToko, setFormNamaToko] = useState(profil.nama_toko);
+  const [formSlogan, setFormSlogan] = useState(profil.slogan);
+  const [formAlamat, setFormAlamat] = useState(profil.alamat);
+  const [formTelepon, setFormTelepon] = useState(profil.telepon);
+  const [formJamBuka, setFormJamBuka] = useState(profil.jam_buka);
+  const [formSosmed, setFormSosmed] = useState(profil.sosmed);
+
+  // Buka Modal Profil & Sinkronisasi Data Saat Ini
+  const handleOpenEditProfile = () => {
+    setFormNamaToko(profil.nama_toko);
+    setFormSlogan(profil.slogan);
+    setFormAlamat(profil.alamat);
+    setFormTelepon(profil.telepon);
+    setFormJamBuka(profil.jam_buka);
+    setFormSosmed(profil.sosmed);
+    setIsProfileModalOpen(true);
+  };
+
+  // Simpan Perubahan Profil (Update ke State / API)
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const updatedProfile = {
+      nama_toko: formNamaToko,
+      slogan: formSlogan,
+      alamat: formAlamat,
+      telepon: formTelepon,
+      jam_buka: formJamBuka,
+      sosmed: formSosmed
+    };
+
+    try {
+      // Jika sudah ada API route backend untuk profil, silakan uncomment baris di bawah ini:
+      /*
+      const res = await fetch('/api/profil', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedProfile),
+      });
+      if (!res.ok) throw new Error();
+      */
+
+      setProfil(updatedProfile);
+      setIsProfileModalOpen(false);
+      alert('Profil toko berhasil diperbarui!');
+    } catch (err) {
+      alert('Gagal menyimpan profil toko.');
+    }
+  };
+
   // State Form Login
   const [identity, setIdentity] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   // ==========================================
-  // STATE KHUSUS CRUD KATALOG
+  // STATE & LOGIKA CRUD KATALOG
   // ==========================================
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'update'>('create');
   const [selectedProdukId, setSelectedProdukId] = useState<number | null>(null);
   
-  // State Input Form Produk
   const [formNama, setFormNama] = useState('');
   const [formHarga, setFormHarga] = useState(0);
   const [formKategori, setFormKategori] = useState('Roti Manis');
   const [formStok, setFormStok] = useState(0);
   const [formDeskripsi, setFormDeskripsi] = useState('');
 
-  // Fetch Data Produk (Read)
   const muatProduk = () => {
     fetch('/api/produk')
       .then((res) => res.json())
@@ -62,11 +134,6 @@ export default function TumTimApp() {
     muatProduk();
   }, []);
 
-  // ==========================================
-  // FUNGSI LOGIKA CRUD BACKEND
-  // ==========================================
-  
-  // Buka Modal untuk Tambah (Create)
   const handleOpenCreate = () => {
     setModalMode('create');
     setSelectedProdukId(null);
@@ -78,7 +145,6 @@ export default function TumTimApp() {
     setIsModalOpen(true);
   };
 
-  // Buka Modal untuk Edit (Update)
   const handleOpenUpdate = (prod: Produk) => {
     setModalMode('update');
     setSelectedProdukId(prod.id);
@@ -90,10 +156,8 @@ export default function TumTimApp() {
     setIsModalOpen(true);
   };
 
-  // Simpan Data (Create atau Update)
   const handleSaveProduk = async (e: React.FormEvent) => {
     e.preventDefault();
-
     const payload = {
       nama_produk: formNama,
       harga: Number(formHarga),
@@ -101,7 +165,6 @@ export default function TumTimApp() {
       stok: Number(formStok),
       deskripsi: formDeskripsi,
     };
-
     const url = modalMode === 'create' ? '/api/produk' : `/api/produk?id=${selectedProdukId}`;
     const method = modalMode === 'create' ? 'POST' : 'PUT';
 
@@ -111,11 +174,10 @@ export default function TumTimApp() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-
       if (res.ok) {
         alert(modalMode === 'create' ? 'Produk baru berhasil ditambahkan!' : 'Data produk berhasil diperbarui!');
         setIsModalOpen(false);
-        muatProduk(); // Refresh data katalog
+        muatProduk();
       } else {
         alert('Gagal menyimpan data produk.');
       }
@@ -124,16 +186,14 @@ export default function TumTimApp() {
     }
   };
 
-  // Hapus Data (Delete)
   const handleDeleteProduk = async (id: number) => {
     if (!confirm('Apakah Anda yakin ingin menghapus produk ini dari katalog?')) return;
-
     try {
       const res = await fetch(`/api/produk?id=${id}`, { method: 'DELETE' });
       if (res.ok) {
         alert('Produk berhasil dihapus!');
         setIsModalOpen(false);
-        muatProduk(); // Refresh data katalog
+        muatProduk();
       } else {
         alert('Gagal menghapus produk.');
       }
@@ -142,11 +202,10 @@ export default function TumTimApp() {
     }
   };
 
-  // Logika Kasir / Transaksi
   const addToCart = (produk: Produk) => {
     const existing = cart.find((item) => item.produk.id === produk.id);
     if (existing) {
-      setCart(cart.map((item) => item.produk.id === produk.id ? { ...item, quantity: item.quantity + 1 } : item));
+      setCart(cart.map((item) => item.produk.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
     } else {
       setCart([...cart, { produk, quantity: 1 }]);
     }
@@ -181,9 +240,6 @@ export default function TumTimApp() {
   const pajak = Math.round(subtotal * 0.11);
   const totalBayar = subtotal + pajak;
 
-  // ==========================================
-  // VIEW: LOGIN
-  // ==========================================
   if (view === 'login') {
     return (
       <div className="bg-[#fff8f2] min-h-screen flex items-center justify-center relative w-full font-sans">
@@ -256,7 +312,6 @@ export default function TumTimApp() {
 
       {/* Main Container Shell */}
       <main className="ml-[280px] min-h-screen flex flex-col relative">
-        {/* Top Navbar */}
         <header className="h-16 flex items-center justify-between px-6 w-full sticky top-0 bg-[#fff8f2]/80 backdrop-blur-md z-40 border-b border-[#d3c4b2]/30">
           <div className="flex items-center gap-4 flex-1">
             <div className="relative w-full max-w-md">
@@ -288,31 +343,122 @@ export default function TumTimApp() {
               <h2 className="text-3xl font-bold text-[#7e5700]">Dashboard Overview</h2>
               <p className="text-[#4f4537] text-sm">Welcome back! Here's what's happening at Tum Tim today.</p>
             </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white p-6 rounded-xl border border-[#ede1ce] shadow-sm">
-                <p className="text-xs uppercase text-[#4f4537] tracking-wider">Total Sales (Today)</p>
-                <h3 className="text-2xl font-bold mt-1">Rp 4.250.000</h3>
+                <div className="flex justify-between items-start mb-2">
+                  <p className="text-xs uppercase text-[#4f4537] tracking-wider font-semibold">Total Sales (Today)</p>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-[#ffdeac] text-[#7e5700] font-bold">▲ 12%</span>
+                </div>
+                <h3 className="text-2xl font-bold">Rp 4.250.000</h3>
               </div>
               <div className="bg-white p-6 rounded-xl border border-[#ede1ce] shadow-sm">
-                <p className="text-xs uppercase text-[#4f4537] tracking-wider">Orders Processed</p>
-                <h3 className="text-2xl font-bold mt-1">142 Orders</h3>
+                <div className="flex justify-between items-start mb-2">
+                  <p className="text-xs uppercase text-[#4f4537] tracking-wider font-semibold">Orders Processed</p>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-[#ffdeac] text-[#7e5700] font-bold">▲ 8%</span>
+                </div>
+                <h3 className="text-2xl font-bold">142 Orders</h3>
               </div>
               <div className="bg-white p-6 rounded-xl border border-[#ede1ce] shadow-sm">
-                <p className="text-xs uppercase text-[#4f4537] tracking-wider">Monthly Revenue</p>
-                <h3 className="text-2xl font-bold mt-1">Rp 128.5M</h3>
+                <div className="flex justify-between items-start mb-2">
+                  <p className="text-xs uppercase text-[#4f4537] tracking-wider font-semibold">Monthly Revenue</p>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-[#ffdeac] text-[#7e5700] font-bold">▲ 15.4%</span>
+                </div>
+                <h3 className="text-2xl font-bold">Rp 128.5M</h3>
               </div>
             </div>
+
+            {/* Profile Card & Info Alamat Dinamis */}
+            <div className="bg-white p-6 rounded-xl border border-[#ede1ce] shadow-sm">
+              <div className="flex flex-col md:flex-row gap-6">
+                <div className="w-full md:w-1/3 aspect-[4/3] rounded-xl overflow-hidden relative group shadow-sm bg-[#f8ecd9]">
+                  <img className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/gps-cs-s/APNQkAFpheWWewZ4qVkqS4fpwLroRsTlwiqupC6KkqrmSR0NwmIf7uv34_CFFEQ3C8UUt_TfhN-oRRgN1wVgJQFuoCcSYvspsfNA4ty1FBNNXPKHBcppuzI1aj11Vz-W30XBthaV8H2rZQ=s1360-w1360-h1020-rw" alt="Ruko Bluder Shono" />
+                </div>
+
+                <div className="flex-1 space-y-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      {/* Data Diambil dari State Dinamis */}
+                      <h3 className="text-xl font-bold text-[#201b0f]">{profil.nama_toko}</h3>
+                      <p className="text-xs text-[#4f4537] italic">{profil.slogan}</p>
+                    </div>
+                    {/* KLIK EDIT PROFILE AKAN MEMBUKA MODAL CRUD */}
+                    <button 
+                      onClick={handleOpenEditProfile}
+                      className="px-4 py-1.5 bg-[#7e5700] text-white rounded-full text-xs font-semibold hover:bg-[#d4a24c] hover:text-[#563a00] transition-all shadow-sm"
+                    >
+                      Edit Profile
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-[#ede1ce] text-sm">
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-2.5">
+                        <span className="material-symbols-outlined text-[#7e5700] text-xl mt-0.5">location_on</span>
+                        <div>
+                          <p className="text-[11px] font-bold text-[#4f4537] uppercase tracking-wider">Location</p>
+                          <p className="text-[#201b0f] text-xs leading-relaxed">{profil.alamat}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2.5">
+                        <span className="material-symbols-outlined text-[#7e5700] text-xl">call</span>
+                        <div>
+                          <p className="text-[11px] font-bold text-[#4f4537] uppercase tracking-wider">Contact Phone</p>
+                          <p className="text-[#201b0f] text-xs">{profil.telepon}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-2.5">
+                        <span className="material-symbols-outlined text-[#7e5700] text-xl mt-0.5">schedule</span>
+                        <div>
+                          <p className="text-[11px] font-bold text-[#4f4537] uppercase tracking-wider">Business Hours</p>
+                          <p className="text-[#201b0f] text-xs">{profil.jam_buka}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2.5">
+                        <span className="material-symbols-outlined text-[#7e5700] text-xl">language</span>
+                        <div>
+                          <p className="text-[11px] font-bold text-[#4f4537] uppercase tracking-wider">Social & Web</p>
+                          <p className="text-[#201b0f] text-xs">{profil.sosmed}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <section className="bg-[#ede1ce] p-6 rounded-2xl relative shadow-sm overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="space-y-3 max-w-lg">
+                <span className="px-3 py-0.5 bg-[#7e5700] text-white rounded-full text-xs italic">Pilihan Istimewa</span>
+                <h2 className="text-xl font-bold text-[#201b0f] leading-tight">UNTUK MOMEN HAJATAN YANG LEBIH BERKESAN</h2>
+                <p className="text-xs text-[#4f4537] leading-relaxed">Elevate your special events with our premium selection of artisanal breads and cookies. Hand-crafted with passion and the finest ingredients.</p>
+                <div className="flex gap-2 pt-1">
+                  <button className="bg-[#7e5700] text-white px-4 py-2 rounded-full text-xs font-bold shadow-sm">Create Bulk Order</button>
+                  <button className="border border-[#7e5700] text-[#7e5700] px-4 py-2 rounded-full text-xs font-bold bg-transparent">Download Catalog</button>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="w-24 h-24 rounded-xl overflow-hidden shadow-inner bg-[#fff8f2] p-1">
+                  <img className="w-full h-full object-cover rounded-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8kMnScm28oeO_nnzVqRF6tqDCcyGocUaZD2vDARAcR8FdHNzjhbsxPSH279tRvM08C_E2JHVx8iKxg1A44YpOnUyQBUQtjdid8UO8tBAW30mnOmhU8br6BoFtzxBkdA54xpFGPAWkEx2uRjNWfMCfFH7y3ISqDLr5i5fjw9f5jXKKM53dtkEqA5c-Vlo_rkysOxjFW9hkuJdwVRyGYTL9XQqjKAzuFCBYkK-ft4Nex13NjMxUcGhG" alt="Featured 1" />
+                </div>
+                <div className="w-24 h-24 rounded-xl overflow-hidden shadow-inner bg-[#fff8f2] p-1">
+                  <img className="w-full h-full object-cover rounded-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXLH-lElJEpyKc_lpzgT8ODYnJWRV-QM_IpJcdne52ZC9q8pcNXXpyrAexQHoE2XUjGPC_GL95QGJzWlWeUOcKM7b_5Vx_4dEBpdRKnmwT5IwTiovVYkhlwOeg_aZZONWSUmGIvBNpOpSAZ4TIgU_LM3kIDhHaIv0_mb77FhqQeTGVlalj6Tjv_MtFYgp9RSQdoSmr1hk6N8n5CmKb0Qkr4OlpHYP3l28MeTvmkhkS5eHDsQwEmVge" alt="Featured 2" />
+                </div>
+              </div>
+            </section>
           </div>
         )}
 
-        {/* VIEW: KATALOG (DENGAN AKSI UPDATE & CREATE) */}
+        {/* VIEW: KATALOG */}
         {view === 'katalog' && (
           <div className="p-6">
             <div className="mb-6">
               <h2 className="text-3xl font-bold text-[#201b0f]">Katalog Produk</h2>
               <p className="text-[#4f4537] text-sm mt-1">Klik pada kartu produk untuk memperbarui data (Update/Delete) atau gunakan tombol di bawah.</p>
             </div>
-            
             <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {daftarProduk.map((prod) => (
                 <div key={prod.id} onClick={() => handleOpenUpdate(prod)} className="bg-white rounded-xl overflow-hidden border border-[#f4e8d5] shadow-sm p-4 flex flex-col cursor-pointer hover:-translate-y-1 hover:shadow-md transition-all">
@@ -327,8 +473,6 @@ export default function TumTimApp() {
                   </div>
                 </div>
               ))}
-              
-              {/* Tombol Tambah Produk Baru */}
               <button onClick={handleOpenCreate} className="border-2 border-dashed border-[#d3c4b2] rounded-xl flex flex-col items-center justify-center p-6 bg-transparent hover:bg-[#ede1ce]/20 group transition-all">
                 <span className="material-symbols-outlined text-4xl text-[#d3c4b2] group-hover:text-[#7e5700] mb-2">add_circle</span>
                 <span className="text-sm font-semibold text-[#4f4537] group-hover:text-[#7e5700]">Tambah Produk Baru</span>
@@ -389,7 +533,63 @@ export default function TumTimApp() {
       </main>
 
       {/* ==========================================
-          MODAL FORM POP-UP (UNTUK CREATE & UPDATE)
+          MODAL FORM POP-UP PROFIL TOKO (UPDATE)
+         ========================================== */}
+      {isProfileModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] animate-fade-in">
+          <div className="bg-white rounded-xl w-full max-w-lg p-6 shadow-2xl border border-[#ede1ce] max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4 border-b pb-2">
+              <h3 className="text-xl font-bold text-[#7e5700]">Perbarui Profil Toko</h3>
+              <button onClick={() => setIsProfileModalOpen(false)} className="text-gray-400 hover:text-gray-600 font-bold text-xl">✕</button>
+            </div>
+
+            <form onSubmit={handleSaveProfile} className="space-y-4">
+              <div>
+                <label className="text-sm font-bold text-[#4f4537] block mb-1">Nama Instansi / Toko</label>
+                <input className="w-full p-2.5 bg-[#fff8f2] border border-[#d3c4b2] rounded-lg outline-none focus:ring-1 focus:ring-[#7e5700]" type="text" value={formNamaToko} onChange={(e) => setFormNamaToko(e.target.value)} required />
+              </div>
+
+              <div>
+                <label className="text-sm font-bold text-[#4f4537] block mb-1">Slogan / Keterangan Bisnis</label>
+                <input className="w-full p-2.5 bg-[#fff8f2] border border-[#d3c4b2] rounded-lg outline-none focus:ring-1 focus:ring-[#7e5700]" type="text" value={formSlogan} onChange={(e) => setFormSlogan(e.target.value)} required />
+              </div>
+
+              <div>
+                <label className="text-sm font-bold text-[#4f4537] block mb-1">Alamat Lengkap Operasional</label>
+                <textarea className="w-full p-2.5 bg-[#fff8f2] border border-[#d3c4b2] rounded-lg outline-none h-20 resize-none focus:ring-1 focus:ring-[#7e5700]" value={formAlamat} onChange={(e) => setFormAlamat(e.target.value)} required />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-bold text-[#4f4537] block mb-1">No. Telepon / Kontak</label>
+                  <input className="w-full p-2.5 bg-[#fff8f2] border border-[#d3c4b2] rounded-lg outline-none" type="text" value={formTelepon} onChange={(e) => setFormTelepon(e.target.value)} required />
+                </div>
+                <div>
+                  <label className="text-sm font-bold text-[#4f4537] block mb-1">Jam Operasional</label>
+                  <input className="w-full p-2.5 bg-[#fff8f2] border border-[#d3c4b2] rounded-lg outline-none" type="text" value={formJamBuka} onChange={(e) => setFormJamBuka(e.target.value)} required />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-bold text-[#4f4537] block mb-1">Media Sosial & Situs Web</label>
+                <input className="w-full p-2.5 bg-[#fff8f2] border border-[#d3c4b2] rounded-lg outline-none" type="text" value={formSosmed} onChange={(e) => setFormSosmed(e.target.value)} required />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t mt-6">
+                <button type="button" onClick={() => setIsProfileModalOpen(false)} className="px-4 py-2.5 border border-[#d3c4b2] text-[#4f4537] font-semibold rounded-lg">
+                  Batal
+                </button>
+                <button type="submit" className="px-6 py-2.5 bg-[#7e5700] text-white font-bold rounded-lg hover:bg-[#604100] transition-colors">
+                  Simpan Perubahan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==========================================
+          MODAL FORM POP-UP PRODUK (CREATE & UPDATE)
          ========================================== */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] animate-fade-in">
@@ -428,16 +628,10 @@ export default function TumTimApp() {
                 </select>
               </div>
 
-             {/* Temukan bagian Deskripsi Produk di dalam Modal Form app/page.tsx */}
-<div>
-  <label className="text-sm font-bold text-[#4f4537] block mb-1">Deskripsi Produk</label>
-  <textarea 
-    className="w-full p-2.5 bg-[#fff8f2] border border-[#d3c4b2] rounded-lg outline-none h-24 resize-none" 
-    value={formDeskripsi || ''} // <-- PERBAIKAN DI SINI: Tambahkan || ''
-    onChange={(e) => setFormDeskripsi(e.target.value)} 
-    placeholder="Berikan deskripsi singkat..."
-  />
-</div>
+              <div>
+                <label className="text-sm font-bold text-[#4f4537] block mb-1">Deskripsi Produk</label>
+                <textarea className="w-full p-2.5 bg-[#fff8f2] border border-[#d3c4b2] rounded-lg outline-none h-24 resize-none" value={formDeskripsi || ''} onChange={(e) => setFormDeskripsi(e.target.value)} placeholder="Berikan deskripsi singkat..." />
+              </div>
 
               <div className="flex gap-3 pt-4 border-t mt-6">
                 {modalMode === 'update' && (
